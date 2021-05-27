@@ -2,7 +2,9 @@
 
 This is an unofficial implementation of the Ubbink Ubiflux Vigor ventillation system Modbus communications.
 
-![Vigor](https://www.ubbink.com/getmedia/7f656140-af4e-48f9-b96e-2ad9b97db3dd/Ubiflux-Vigor)
+**Why?** To be able to control these devices from HomeAssistant, or from your computer.
+
+![Vigor](https://www.my-electro.be/image/cache/catalog/products/ventilators/hrv-units/Ubiflux-Vigor-W400-Ubbink-400x400.jpg)
 
 # Hardware prerequisites #
 
@@ -12,6 +14,8 @@ This is an unofficial implementation of the Ubbink Ubiflux Vigor ventillation sy
 # Hardware setup #
 
 You have to connect your computer or Pi to the Vigor device with a (preferably) twisted pair of wire. Connect the A, B ports of the dongle to the red Modbus port on the Vigor device, A -> 2, B -> 3. If your dongle has a GND port, connect it to 1. (In my setup, I only use two wires, without GND)
+
+You do *not* need the Plus PCB to use this package. (Ubbink 0883246 - circuit board 'Plus' for Vigor with WIFI and LAN)
 
 
 # Software Prerequisites #
@@ -143,6 +147,7 @@ When looking at the PDF, pay attention to the hex and decimal values. In the doc
 
 ## Hardware ##
 
+### Dongle ###
 Search for ```CH340 USB to RS485 485 Converter Adapter Module``` Looks like:
 
 ![Black Dongle](https://i.ebayimg.com/images/g/Fw0AAOSw8G1d71s5/s-l640.jpg)
@@ -152,3 +157,9 @@ or
 ![Blue Dongle](https://i.ebayimg.com/images/g/Nx4AAOSwpAhgMkTw/s-l640.jpg)
 
 For me, this blue one did not work, but I might got a defective one.
+
+### Wall unit ###
+
+Ubbink 0888030 - digital control panel Air Control
+
+![Vigor](https://www.my-electro.be/image/cache/catalog/products/ventilators/accessories/UBBINK-0888030-Aircontrol-Brink-klokbediening-Vigor-400x400w.jpeg)
