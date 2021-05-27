@@ -26,10 +26,6 @@ client.connect()
 
 print("Device serial number:    " + vigor.get_serial_number())
 
-#vigor.set_airflow_mode("low")
-vigor.set_airflow_rate(50)
-
-time.sleep(5)
 
 print("Intake temperature:      " + str(vigor.get_supply_temperature()) + " Celsius")
 print("Intake pressure:         " + str(vigor.get_supply_pressure()) + " Pa")
@@ -43,5 +39,13 @@ print("Exhaust airflow preset:  " + str(vigor.get_extract_airflow_preset()) + " 
 print("Airflow mode:            " + vigor.get_airflow_mode())
 print("Bypass status:           " + vigor.get_bypass_status())
 print("Filter status:           " + vigor.get_filter_status())
+
+vigor.set_airflow_mode("low")
+time.sleep(60)
+
+vigor.set_airflow_rate(135)
+time.sleep(60)
+
+vigor.set_airflow_mode("wall_unit")
 
 client.close()

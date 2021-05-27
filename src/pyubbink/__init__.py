@@ -225,7 +225,7 @@ class VigorDevice():
         if rr.registers[0] == 0:
             return "wall_unit"
         if rr.registers[0] == 2:
-            return "custom_value"
+            return "custom"
 
         command = 8001
         rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
@@ -276,7 +276,7 @@ class VigorDevice():
         else:
             _log.debug("set_airflow_mode: airflow mode is already " + str(value))
 
-    def set_airflow_rate(self, value):
+    def set_custom_airflow_rate(self, value):
         """ 
         Sets the preset value of airflow in qubic meters (only Vigor W400 model)
 
