@@ -2,15 +2,17 @@
 
 This is an unofficial implementation of the Ubbink Ubiflux Vigor ventillation system Modbus communications.
 
+![Vigor](https://www.ubbink.com/getmedia/7f656140-af4e-48f9-b96e-2ad9b97db3dd/Ubiflux-Vigor)
+
 # Hardware prerequisites #
 
 - Ubiflux Vigor W325 or W400 device
 - USB - RS458 dongle
 
-You have to connect your computer or Pi to the Vigor device with a (preferably) twisted pair of wire. Connect the A, B ports of the dongle to the red port on the Vigor device, A -> 2, B -> 3. If your dongle has a GND port, connect it to 1. (In my setup, I only use two wires, without GND)
+# Hardware setup #
 
-## Windows ##
-For the dongle - depending on the version you have - you might need a CH341 chip driver. Google ```CH341SER``` and you will find it.
+You have to connect your computer or Pi to the Vigor device with a (preferably) twisted pair of wire. Connect the A, B ports of the dongle to the red Modbus port on the Vigor device, A -> 2, B -> 3. If your dongle has a GND port, connect it to 1. (In my setup, I only use two wires, without GND)
+
 
 # Software Prerequisites #
 
@@ -19,6 +21,7 @@ For the dongle - depending on the version you have - you might need a CH341 chip
   ```pip install pymodbus --upgrade```
 - Install PyUbbink:
   ```pip install pyubbink```
+- For the dongle - depending on the version you have - you might need a CH341 chip driver. For Windows, search ```CH341SER``` and you will find it. For Pi + HomeAssistant it worked for me without additional driver.
 
 # Usage #
 
@@ -136,4 +139,16 @@ https://www.ubbink.com/en-gb/ventilation/residential-ventilation/residential-ven
 Interestingly, only the Dutch version contains the ModBus commands.
 https://www.ubbink.com/getmedia/b970e7e8-a20f-4265-82c0-948590c74311/Ubiflux-Vigor-W325-installatiehandleiding-versie-12-2018-NL.PDF
 
-When looking at the logs, pay attention to the hex and decimal values. In the documentation, they are sometimes hex, sometimes decimal.
+When looking at the PDF, pay attention to the hex and decimal values. In the documentation, they are sometimes hex, sometimes decimal.
+
+## Hardware ##
+
+Search for ```CH340 USB to RS485 485 Converter Adapter Module``` Looks like:
+
+![Black Dongle](https://i.ebayimg.com/images/g/Fw0AAOSw8G1d71s5/s-l640.jpg)
+
+or
+
+![Blue Dongle](https://i.ebayimg.com/images/g/Nx4AAOSwpAhgMkTw/s-l640.jpg)
+
+For me, this blue one did not work, but I might got a defective one.
