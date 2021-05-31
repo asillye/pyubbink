@@ -1,16 +1,16 @@
+# -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
+long_description = open('README.md', 'r').read()
 
 setup(
-    name='pyubbink',  
+    name='pyubbink',
     version='0.1',
-    scripts=['pyubbink'] ,
-    author="Adam Sillye",
-    author_email="adam@berriesand.co",
-    description="'Python interface for Ubbink Ubiflux Vigor ventillation",
+    license='MIT',
+    
+    author='Adam Sillye',
+    author_email='adam@berriesand.co',
+    description='Python interface for Ubbink Ubiflux Vigor ventillation',
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/asillye/pyubbink",
@@ -26,5 +26,5 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
         'Operating System :: OS Independent',
-     ],
- )
+    ]
+)
