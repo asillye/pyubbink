@@ -1,14 +1,10 @@
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
-from pymodbus.client.sync import ModbusTcpClient
-from  pyubbink import VigorDevice
-from pymodbus.transaction import ModbusRtuFramer as ModbusFramer
-import time
-
-# client = ModbusClient(port='COM9', baudrate=9600, stopbits = 1, bytesize = 8, parity = 'N', method="rtu", timeout=60)
-
+import asyncio
+from pymodbus.client import AsyncModbusTcpClient
+from pymodbus.framer import ModbusRtuFramer
+from pyubbink import VigorDevice
 
 # To test with TCP:
-
+#
 # On home assistant server:
 # 1. apk add ser2net
 # 2. in ~/ser2net.conf add one single line:
@@ -17,35 +13,32 @@ import time
 #           ser2net -c ~/ser2net.conf -n -d -l
 #
 # This will redirect the USB1 device to 13334 port
-#
-client = ModbusTcpClient(host="192.168.100.10", port=13334, framer=ModbusFramer, method="rtu")
 
-vigor = VigorDevice(client)
+async def main():
+    client = AsyncModbusTcpClient(host="192.168.100.10", port=13334, framer=ModbusRtuFramer)
 
-client.connect()
+    async with VigorDevice(client) as vigor:
+        sensors = await vigor.get_all_sensors()
 
-print("Device serial number:    " + vigor.get_serial_number())
+        print("Device serial number:    " + sensors["serial_number"])
+        print("Intake temperature:      " + str(sensors["supply_temperature"]) + " Celsius")
+        print("Intake pressure:         " + str(sensors["supply_pressure"]) + " Pa")
+        print("Intake actual airflow:   " + str(sensors["supply_airflow_actual"]) + " m3/h")
+        print("Intake airflow preset:   " + str(sensors["supply_airflow_preset"]) + " m3/h")
+        print("Exhaust temperature:     " + str(sensors["extract_temperature"]) + " Celsius")
+        print("Exhaust pressure:        " + str(sensors["extract_pressure"]) + " Pa")
+        print("Exhaust actual airflow:  " + str(sensors["extract_airflow_actual"]) + " m3/h")
+        print("Exhaust airflow preset:  " + str(sensors["extract_airflow_preset"]) + " m3/h")
+        print("Airflow mode:            " + sensors["airflow_mode"])
+        print("Bypass status:           " + sensors["bypass_status"])
+        print("Filter status:           " + sensors["filter_status"])
 
+        await vigor.set_airflow_mode("low")
+        await asyncio.sleep(60)
 
-print("Intake temperature:      " + str(vigor.get_supply_temperature()) + " Celsius")
-print("Intake pressure:         " + str(vigor.get_supply_pressure()) + " Pa")
-print("Intake actual airflow:   " + str(vigor.get_supply_airflow_actual()) + " m3/h")
-print("Intake airflow preset:   " + str(vigor.get_supply_airflow_preset()) + " m3/h")
-print("Exhaust temperature:     " + str(vigor.get_extract_temperature()) + " Celsius")
-print("Exhaust pressure:        " + str(vigor.get_extract_pressure()) + " Pa")
-print("Exhaust actual airflow:  " + str(vigor.get_extract_airflow_actual()) + " m3/h")
-print("Exhaust airflow preset:  " + str(vigor.get_extract_airflow_preset()) + " m3/h")
+        await vigor.set_custom_airflow_rate(135)
+        await asyncio.sleep(60)
 
-print("Airflow mode:            " + vigor.get_airflow_mode())
-print("Bypass status:           " + vigor.get_bypass_status())
-print("Filter status:           " + vigor.get_filter_status())
+        await vigor.set_airflow_mode("wall_unit")
 
-vigor.set_airflow_mode("low")
-time.sleep(60)
-
-vigor.set_airflow_rate(135)
-time.sleep(60)
-
-vigor.set_airflow_mode("wall_unit")
-
-client.close()
+asyncio.run(main())

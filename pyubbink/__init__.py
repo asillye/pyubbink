@@ -1,7 +1,7 @@
-import pymodbus
+import asyncio
 import logging
 
-_log = logging
+_log = logging.getLogger(__name__)
 
 def _convert_from_bcd(bcd):
     """ Converts a bcd value to a decimal value
@@ -20,43 +20,51 @@ class VigorDevice():
     UNIT = 20
 
     def __init__(self, client, unit=20):
-        """ 
+        """
         VigorDevice class is a pymodbus wrapper with named commands for the Ubiflux Vigor W350/W400 devices.
 
-        :param client: pymodbus client, typically ModbusSerialClient, SHOULD USE 'rtu' FRAMER!
+        :param client: async pymodbus client, e.g. AsyncModbusTcpClient or AsyncModbusSerialClient
         :param unit: Modbus slave address of the device (first byte in packages)
         """
         self.client = client
         self.UNIT = unit
         _log.debug("VigorDevice: " + str(client) + " modbus slave address " + str(unit) + " (decimal)")
 
+    async def __aenter__(self):
+        await self.client.connect()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.client.close()
+        return False
+
     def _handle_error(self, rr, method, command):
         _log.error(method + ": error reading ModBus control register command=" + str(command) + ", result=" + str(rr))
-        return "error"    
+        return "error"
 
     def _handle_error_int(self, rr, method, command):
         _log.error(method + ": error reading ModBus control register command=" + str(command) + ", result=" + str(rr))
-        return -1 
+        return -1
 
-    def get_serial_number(self):
+    async def get_serial_number(self):
         command = 4010
-        rr = self.client.read_input_registers(command, 3, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 3, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "get_serial_number", command)
 
         serial = str(_convert_from_bcd(rr.registers[0])).zfill(4) + \
                  str(_convert_from_bcd(rr.registers[1])).zfill(4) + \
-                 str(_convert_from_bcd(rr.registers[2])).zfill(4) 
+                 str(_convert_from_bcd(rr.registers[2])).zfill(4)
         _log.debug("get_serial_number: serial is " + serial)
         return serial
 
 
-    def get_supply_pressure(self):
-        """ 
+    async def get_supply_pressure(self):
+        """
         Gets the supply pressure in Pascals.
         """
         command = 4023
-        rr = self.client.read_input_registers(4023, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error_int(rr, "get_supply_pressure", command)
 
@@ -65,26 +73,26 @@ class VigorDevice():
         _log.debug("get_supply_pressure: supply pressure is " + str(result) + " Pa")
         return result
 
-    def get_extract_pressure(self):
-        """ 
+    async def get_extract_pressure(self):
+        """
         Gets the extract pressure in Pascals.
         """
         command = 4024
-        rr = self.client.read_input_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error_int(rr, "get_extract_pressure", command)
 
         # NOTE: the documentation says the value is a value in tenths of Pascal, but seems it's just the plain value.
-        result = rr.registers[0] 
+        result = rr.registers[0]
         _log.debug("get_extract_pressure: extract pressure is " + str(result) + " Pa")
         return result
 
-    def get_supply_airflow_preset(self):
-        """ 
+    async def get_supply_airflow_preset(self):
+        """
         Gets the supply airflow preset in cubic meter per hour
         """
         command = 4031
-        rr = self.client.read_input_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error_int(rr, "get_supply_airflow_preset", command)
 
@@ -92,12 +100,12 @@ class VigorDevice():
         _log.debug("get_supply_airflow_preset: " + str(result) + " m3/h")
         return result
 
-    def get_supply_airflow_actual(self):
-        """ 
+    async def get_supply_airflow_actual(self):
+        """
         Gets the actual supply airflow in cubic meter per hour
         """
         command = 4032
-        rr = self.client.read_input_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error_int(rr, "get_supply_airflow_actual", command)
 
@@ -105,12 +113,12 @@ class VigorDevice():
         _log.debug("get_supply_airflow_actual: " + str(result) + " m3/h")
         return result
 
-    def get_extract_airflow_preset(self):
-        """ 
+    async def get_extract_airflow_preset(self):
+        """
         Gets the extract airflow preset in cubic meter per hour
         """
         command = 4041
-        rr = self.client.read_input_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error_int(rr, "get_extract_airflow_preset", command)
 
@@ -118,12 +126,12 @@ class VigorDevice():
         _log.debug("get_extract_airflow_preset: " + str(result) + " m3/h")
         return result
 
-    def get_extract_airflow_actual(self):
-        """ 
+    async def get_extract_airflow_actual(self):
+        """
         Gets the actual extract airflow in cubic meter per hour
         """
         command = 4042
-        rr = self.client.read_input_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error_int(rr, "get_extract_airflow_actual", command)
 
@@ -131,12 +139,12 @@ class VigorDevice():
         _log.debug("get_extract_airflow_actual: " + str(result) + " m3/h")
         return result
 
-    def get_supply_temperature(self):
-        """ 
+    async def get_supply_temperature(self):
+        """
         Gets the supply airflow temperature in Celsius
         """
         command = 4036
-        rr = self.client.read_input_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error_int(rr, "get_supply_temperature", command)
 
@@ -144,12 +152,12 @@ class VigorDevice():
         _log.debug("get_supply_temperature: " + str(result) + " Celsius")
         return result
 
-    def get_extract_temperature(self):
-        """ 
+    async def get_extract_temperature(self):
+        """
         Gets the extract airflow temperature in Celsius
         """
         command = 4046
-        rr = self.client.read_input_registers(4046, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error_int(rr, "get_extract_temperature", command)
 
@@ -157,12 +165,12 @@ class VigorDevice():
         _log.debug("get_extract_temperature: " + str(result) + " Celsius")
         return result
 
-    def get_bypass_status(self):
-        """ 
+    async def get_bypass_status(self):
+        """
         Gets the bypass status eg. open, close etc.
         """
         command = 4050
-        rr = self.client.read_input_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "get_bypass_status", command)
 
@@ -179,31 +187,28 @@ class VigorDevice():
         _log.debug("get_bypass_status: " + result)
         return result
 
-    def get_filter_status(self):
-        """ 
+    async def get_filter_status(self):
+        """
         Gets the filter status: dirty/normal
         """
         command = 4100
-        rr = self.client.read_input_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_input_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "get_filter_status", command)
 
         value = rr.registers[0]
-        if value == 1:
-            result = "dirty"
-        else:
-            result = "normal"
+        result = "dirty" if value == 1 else "normal"
 
         _log.debug("get_filter_status: " + result)
         return result
 
 
-    def set_modbus_mode(self, mode):
+    async def set_modbus_mode(self, mode):
         """
             Sets the control mode
         """
         command = 8000
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_holding_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "set_modbus_mode.1", command)
 
@@ -212,25 +217,25 @@ class VigorDevice():
         _log.debug("set_modbus_mode: ModBus control register is " + str(value))
         if value != mode:
             _log.debug("set_modbus_mode: setting ModBus control register to " + str(mode))
-            rr = self.client.write_register(command, mode, unit=self.UNIT)
+            rr = await self.client.write_register(command, mode, slave=self.UNIT)
             if rr.isError():
                 return self._handle_error(rr, "set_modbus_mode.2", command)
-        
- #adding bypass control      
-    def get_bypass_mode(self):
+
+    async def get_bypass_mode(self):
         command = 6100
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_holding_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "get_bypass_mode.1", command)
-        if rr.registers[0] == 0:
+        value = rr.registers[0]
+        if value == 0:
             return "auto"
-        if rr.registers[1] == 1:
+        if value == 1:
             return "closed"
-        if rr.registers[0] == 2:
+        if value == 2:
             return "open"
 
         command = 8001
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_holding_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "get_bypass_mode.2", command)
         value = rr.registers[0]
@@ -240,10 +245,10 @@ class VigorDevice():
         if value == 2: return "open"
 
         return "unknown (" + str(value) + ")"
-            
-    def set_bypass_mode(self, mode):
-        """ 
-        Enables the control of the device through Modbus
+
+    async def set_bypass_mode(self, mode):
+        """
+        Sets the bypass valve mode
         """
         if type(mode) == int:
             mode_value = min(2, max(0, mode))
@@ -254,32 +259,38 @@ class VigorDevice():
                 mode_value = 1
             elif mode == "open":
                 mode_value = 2
-           elif mode == "wall_unit":
-                _log.debug("set_airflow_mode: reverting to wall unit control")
-                self.set_modbus_mode(0)
+            elif mode == "wall_unit":
+                _log.debug("set_bypass_mode: reverting to wall unit control")
+                await self.set_modbus_mode(0)
                 return
+            else:
+                _log.error("set_bypass_mode: unknown mode " + str(mode))
+                return
+        else:
+            _log.error("set_bypass_mode: invalid mode type " + str(type(mode)))
+            return
 
-        self.set_modbus_mode(1)
+        await self.set_modbus_mode(1)
 
         command = 6100
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_holding_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "set_bypass_mode.1", command)
 
         value = rr.registers[0]
         if value != mode_value:
             _log.debug("set_bypass_mode: setting bypass mode to " + str(mode_value) + " in range [0-2]")
-            rr = self.client.write_register(command, mode_value, unit=self.UNIT)
+            rr = await self.client.write_register(command, mode_value, slave=self.UNIT)
             if rr.isError():
                 return self._handle_error(rr, "set_bypass_mode.2", command)
         else:
             _log.debug("set_bypass_mode: bypass mode is already " + str(value))
 
-    
-    
-    def get_airflow_mode(self):
+
+
+    async def get_airflow_mode(self):
         command = 8000
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_holding_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "get_airflow_mode.1", command)
         if rr.registers[0] == 0:
@@ -288,7 +299,7 @@ class VigorDevice():
             return "custom"
 
         command = 8001
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_holding_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "get_airflow_mode.2", command)
         value = rr.registers[0]
@@ -300,9 +311,9 @@ class VigorDevice():
 
         return "unknown (" + str(value) + ")"
 
-    def set_airflow_mode(self, mode):
-        """ 
-        Enables the control of the device through Modbus
+    async def set_airflow_mode(self, mode):
+        """
+        Sets the airflow mode
         """
         if type(mode) == int:
             mode_value = min(3, max(0, mode))
@@ -317,32 +328,38 @@ class VigorDevice():
                 mode_value = 3
             elif mode == "wall_unit":
                 _log.debug("set_airflow_mode: reverting to wall unit control")
-                self.set_modbus_mode(0)
+                await self.set_modbus_mode(0)
                 return
+            else:
+                _log.error("set_airflow_mode: unknown mode " + str(mode))
+                return
+        else:
+            _log.error("set_airflow_mode: invalid mode type " + str(type(mode)))
+            return
 
-        self.set_modbus_mode(1)
+        await self.set_modbus_mode(1)
 
         command = 8001
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_holding_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "set_airflow_mode.1", command)
 
         value = rr.registers[0]
         if value != mode_value:
             _log.debug("set_airflow_mode: setting airflow mode to " + str(mode_value) + " in range [0-3]")
-            rr = self.client.write_register(command, mode_value, unit=self.UNIT)
+            rr = await self.client.write_register(command, mode_value, slave=self.UNIT)
             if rr.isError():
                 return self._handle_error(rr, "set_airflow_mode.2", command)
         else:
             _log.debug("set_airflow_mode: airflow mode is already " + str(value))
 
-    def set_custom_airflow_rate(self, value):
-        """ 
+    async def set_custom_airflow_rate(self, value):
+        """
         Sets the preset value of airflow in qubic meters (only Vigor W400 model)
 
         NOTE: if you read back the value with get_supply_airflow_preset, you have to wait  a short time before doing it
         """
-        self.set_modbus_mode(2)
+        await self.set_modbus_mode(2)
 
         if value < 50:
             preset_value = 0
@@ -350,20 +367,41 @@ class VigorDevice():
             preset_value = 400
         else:
             preset_value = value
-                
+
         command = 8002
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
+        rr = await self.client.read_holding_registers(command, 1, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "set_airflow_rate.1", command)
 
-        value = rr.registers[0]
-#        if value != preset_value:
         _log.debug("set_airflow_rate: setting airflow rate to " + str(preset_value) + " in range [0, 50-400]")
-        rr = self.client.write_register(command, preset_value, unit=self.UNIT)
+        rr = await self.client.write_register(command, preset_value, slave=self.UNIT)
         if rr.isError():
             return self._handle_error(rr, "set_airflow_rate.2", command)
- #       else:
-  #          _log.debug("set_airflow_rate: airflow mode is already " + str(value))
 
-
-#_log.basicConfig(level=logging.DEBUG)
+    async def get_all_sensors(self):
+        """
+        Reads all sensor values concurrently and returns a dict.
+        Uses asyncio.gather() to issue all reads in parallel.
+        """
+        results = await asyncio.gather(
+            self.get_serial_number(),
+            self.get_supply_pressure(),
+            self.get_extract_pressure(),
+            self.get_supply_temperature(),
+            self.get_extract_temperature(),
+            self.get_supply_airflow_preset(),
+            self.get_supply_airflow_actual(),
+            self.get_extract_airflow_preset(),
+            self.get_extract_airflow_actual(),
+            self.get_bypass_status(),
+            self.get_filter_status(),
+            self.get_airflow_mode(),
+        )
+        keys = [
+            "serial_number", "supply_pressure", "extract_pressure",
+            "supply_temperature", "extract_temperature",
+            "supply_airflow_preset", "supply_airflow_actual",
+            "extract_airflow_preset", "extract_airflow_actual",
+            "bypass_status", "filter_status", "airflow_mode",
+        ]
+        return dict(zip(keys, results))
