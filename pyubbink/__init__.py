@@ -216,48 +216,42 @@ class VigorDevice():
             if rr.isError():
                 return self._handle_error(rr, "set_modbus_mode.2", command)
         
- #adding bypass control      
     def get_bypass_mode(self):
+        """
+        Gets the bypass mode (auto, closed, open).
+        """
         command = 6100
         rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
         if rr.isError():
-            return self._handle_error(rr, "get_bypass_mode.1", command)
-        if rr.registers[0] == 0:
-            return "auto"
-        if rr.registers[1] == 1:
-            return "closed"
-        if rr.registers[0] == 2:
-            return "open"
+            return self._handle_error(rr, "get_bypass_mode", command)
 
-        command = 8001
-        rr = self.client.read_holding_registers(command, 1, unit=self.UNIT)
-        if rr.isError():
-            return self._handle_error(rr, "get_bypass_mode.2", command)
         value = rr.registers[0]
+        _bypass_modes = {
+            0: "auto",
+            1: "closed",
+            2: "open"
+        }
+        result = _bypass_modes.get(value, "unknown (" + str(value) + ")")
+        _log.debug("get_bypass_mode: " + result)
+        return result
 
-        if value == 0: return "auto"
-        if value == 1: return "closed"
-        if value == 2: return "open"
-
-        return "unknown (" + str(value) + ")"
-            
     def set_bypass_mode(self, mode):
-        """ 
-        Enables the control of the device through Modbus
         """
-        if type(mode) == int:
+        Sets the bypass mode (auto, closed, open).
+        """
+        if isinstance(mode, int):
             mode_value = min(2, max(0, mode))
-        elif type(mode) == str:
+        elif isinstance(mode, str):
             if mode == "auto":
                 mode_value = 0
             elif mode == "closed":
                 mode_value = 1
             elif mode == "open":
                 mode_value = 2
-           elif mode == "wall_unit":
-                _log.debug("set_airflow_mode: reverting to wall unit control")
-                self.set_modbus_mode(0)
-                return
+            else:
+                return self._handle_error(Exception("Invalid bypass mode"), "set_bypass_mode", "6100")
+        else:
+            return self._handle_error(Exception("Invalid bypass mode type"), "set_bypass_mode", "6100")
 
         self.set_modbus_mode(1)
 
